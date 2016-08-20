@@ -137,7 +137,7 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 		for (int l = 0; l < 16; l++)
 		{
 			sum += GLCM[k][l];
-			P[k][l] = GLCM[k][l];
+			P[k][l] =(float) GLCM[k][l];
 		}
 	}
 

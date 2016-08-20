@@ -9,6 +9,10 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		OpenCV_Debug|x64 = OpenCV_Debug|x64
+		OpenCV_Debug|x86 = OpenCV_Debug|x86
+		OpenCV_Release|x64 = OpenCV_Release|x64
+		OpenCV_Release|x86 = OpenCV_Release|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
@@ -17,6 +21,14 @@ Global
 		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.Debug|x64.Build.0 = Debug|x64
 		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.Debug|x86.ActiveCfg = Debug|Win32
 		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.Debug|x86.Build.0 = Debug|Win32
+		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.OpenCV_Debug|x64.ActiveCfg = OpenCV_Debug|x64
+		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.OpenCV_Debug|x64.Build.0 = OpenCV_Debug|x64
+		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.OpenCV_Debug|x86.ActiveCfg = OpenCV_Debug|Win32
+		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.OpenCV_Debug|x86.Build.0 = OpenCV_Debug|Win32
+		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.OpenCV_Release|x64.ActiveCfg = OpenCV_Release|x64
+		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.OpenCV_Release|x64.Build.0 = OpenCV_Release|x64
+		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.OpenCV_Release|x86.ActiveCfg = OpenCV_Release|Win32
+		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.OpenCV_Release|x86.Build.0 = OpenCV_Release|Win32
 		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.Release|x64.ActiveCfg = Release|x64
 		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.Release|x64.Build.0 = Release|x64
 		{3A62BF3F-56FE-4762-98BD-680CE4CA48F3}.Release|x86.ActiveCfg = Release|Win32
