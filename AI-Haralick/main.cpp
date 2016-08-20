@@ -10,7 +10,7 @@ using namespace cv;
 using namespace std;
 
 void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile);
-void openImage(string &imageName, ofstream &ofile);
+int openImage(string &imageName, ofstream &ofile);
 vector<string> get_all_files_names_within_folder(string folder, string format);
 
 
@@ -32,26 +32,32 @@ int main(int argc, char** argv)
 
 	for each(string file in fileNames)
 	{
+		cout << "Processing Image: " << file;
 		filename = path + "\\" + file;
-		openImage(filename, outfile);
+		if (openImage(filename, outfile)==0)
+			cout << " - Succesful" << endl;
+		else
+			cout << " - Could not open Image" << endl;
 		outfile << endl;
 	}
 
 	outfile.close();
 
+	cout << "All images processed" << endl;
+
 	return 0;
 }
 
-void openImage(string &imageName, ofstream &ofile)
+int openImage(string &imageName, ofstream &ofile)
 {
 	Mat image;
 	image = imread(imageName.c_str(), IMREAD_GRAYSCALE); // Read the file
 
-														 //if (image.empty()) // Check for invalid input
-														 //{
-														 //	cout << "Could not open or find the image" << std::endl;
-														 //	return -1;
-														 //}
+	if (image.empty()) // Check for invalid input
+	{
+		cout << "Could not open or find the image" << std::endl;
+		return -1;
+	}
 
 	CV_Assert(image.depth() == CV_8U);  // accept only uchar images
 
@@ -80,6 +86,8 @@ void openImage(string &imageName, ofstream &ofile)
 	for (int i = 0; i<2;++i)
 		for (int j = 0;j<4;++j)
 			GLCM_calc(newImage, distances[i], j, ofile);
+
+	return 0;
 }
 
 void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
