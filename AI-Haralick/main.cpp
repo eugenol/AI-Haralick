@@ -83,11 +83,15 @@ int openImage(string &imageName, ofstream &ofile)
 
 	int distances[2] = { 1, 3 };
 
-	for (int i = 0; i<2;++i)
-		for (int j = 0;j<4;++j)
+	for (int i = 0; i < 2;++i) // 2 distances
+	{
+		for (int j = 0;j < 4;++j) // 4 directions
+		{
 			GLCM_calc(newImage, distances[i], j, ofile);
+		}
+	}
 
-	return 0;
+	return 0; // success
 }
 
 void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
@@ -100,6 +104,7 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	int nRows = I.rows;
 	int nCols = I.cols * channels;
 
+	//set up matrix
 	int GLCM[16][16] = { 0 };
 	int d0, d1;
 
@@ -123,11 +128,9 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 		break;
 	}
 
-
-	int i, j;
-	for (i = 0; i < nRows; ++i)
+	for (int i = 0; i < nRows; ++i)
 	{
-		for (j = 0; j < nCols; ++j)
+		for (int j = 0; j < nCols; ++j)
 		{
 			if ((i + d0 < nRows) && (i + d0 >= 0) && (j + d1 < nCols) && (j + d1 >= 0))
 				GLCM[(size_t)I.at<uchar>(i, j)][(size_t)I.at<uchar>(i + d0, j + d1)]++;
@@ -140,43 +143,43 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	int sum = 0;
 	float P[16][16] = { 0 };
 
-	for (int k = 0; k < 16; k++)
+	for (int i = 0; i < 16; ++i)
 	{
-		for (int l = 0; l < 16; l++)
+		for (int j = 0; j < 16; ++j)
 		{
-			sum += GLCM[k][l];
-			P[k][l] =(float) GLCM[k][l];
+			sum += GLCM[i][j];
+			P[i][j] =(float) GLCM[i][j];
 		}
 	}
 
 	//Probability
-	for (int k = 0; k < 16; k++)
+	for (int i = 0; i < 16; ++i)
 	{
-		for (int l = 0; l < 16; l++)
+		for (int j = 0; j < 16; ++j)
 		{
-			P[k][l] /= (float)sum;
+			P[i][j] /= (float)sum;
 		}
 	}
 
 	// mean
 	float mu_i = 0, mu_j = 0;
-	for (int k = 0; k < 16; k++)
+	for (int i = 0; i < 16; ++i)
 	{
-		for (int l = 0; l < 16; l++)
+		for (int j = 0; j < 16; ++j)
 		{
-			mu_i += k*P[k][l];
-			mu_j += k*P[k][l];
+			mu_i += i*P[i][j];
+			mu_j += j*P[i][j];
 		}
 	}
 
 	// standard deviation
 	float sd_i = 0, sd_j = 0;
-	for (int k = 0; k < 16; k++)
+	for (int i = 0; i < 16; ++i)
 	{
-		for (int l = 0; l < 16; l++)
+		for (int j = 0; j < 16; ++j)
 		{
-			sd_i += P[k][l] * (k - mu_i)*(k - mu_i);
-			sd_j += P[k][l] * (l - mu_j)*(l - mu_j);
+			sd_i += P[i][j] * (i - mu_i)*(i - mu_i);
+			sd_j += P[i][j] * (j - mu_j)*(j - mu_j);
 		}
 	}
 	sd_i = sqrtf(sd_i);
@@ -190,36 +193,35 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	float correlation = 0;
 	float entropy = 0;
 
-	for (int k = 0; k < 16; k++)
+	for (int i = 0; i < 16; ++i)
 	{
-		for (int l = 0; l < 16; l++)
+		for (int j = 0; j < 16; ++j)
 		{
 			//probability
-			if (P[k][l] > max_probability)
-				max_probability = P[k][l];
+			if (P[i][j] > max_probability)
+				max_probability = P[i][j];
 			//energy
-			energy += P[k][l] * P[k][l];
+			energy += P[i][j] * P[i][j];
 			//homogeneity
-			homogeneity += P[k][l] / (1 + abs(k - l));
+			homogeneity += P[i][j] / (1 + abs(i - j));
 			//contrast
-			contrast += P[k][l] * (k - l)*(k - l);
+			contrast += P[i][j] * (i - j)*(i - j);
 			//correlation
-			correlation += (P[k][l] * (k - mu_i)*(l - mu_j) / (sd_i*sd_j));
+			correlation += (P[i][j] * (i - mu_i)*(j - mu_j) / (sd_i*sd_j));
 			//entropy
-			if (GLCM[k][l] != 0)
-				entropy += P[k][l] * -log(P[k][l]);
+			if (GLCM[i][j] != 0)
+				entropy += P[i][j] * -log(P[i][j]);
 
 		}
 	}
 
+	// Output features to file, delimited by a space
 	ofile << max_probability;
 	ofile << " " << energy;
 	ofile << " " << homogeneity;
 	ofile << " " << contrast;
 	ofile << " " << correlation;
 	ofile << " " << entropy;
-
-
 }
 
 vector<string> get_all_files_names_within_folder(string folder, string format)
