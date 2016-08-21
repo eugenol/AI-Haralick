@@ -30,6 +30,12 @@ int main(int argc, char** argv)
 
 	fileNames = get_all_files_names_within_folder(path, format);
 
+	if (fileNames.empty())
+	{
+		cout << "No files in given directory." << endl;
+		return -1;
+	}
+
 	for each(string file in fileNames)
 	{
 		cout << "Processing Image: " << file;
@@ -104,6 +110,8 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	int nRows = I.rows;
 	int nCols = I.cols * channels;
 
+	int cfactor = 16; //factor for fixing levels
+
 	//set up matrix
 	int GLCM[16][16] = { 0 };
 	int d0, d1;
@@ -128,6 +136,7 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 		break;
 	}
 
+	// Try to speed this up
 	for (int i = 0; i < nRows; ++i)
 	{
 		for (int j = 0; j < nCols; ++j)
@@ -167,8 +176,8 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	{
 		for (int j = 0; j < 16; ++j)
 		{
-			mu_i += i*P[i][j];
-			mu_j += j*P[i][j];
+			mu_i += cfactor*i*P[i][j];
+			mu_j += cfactor*j*P[i][j];
 		}
 	}
 
@@ -178,8 +187,8 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	{
 		for (int j = 0; j < 16; ++j)
 		{
-			sd_i += P[i][j] * (i - mu_i)*(i - mu_i);
-			sd_j += P[i][j] * (j - mu_j)*(j - mu_j);
+			sd_i += P[i][j] * (cfactor*i - mu_i)*(cfactor*i - mu_i);
+			sd_j += P[i][j] * (cfactor*j - mu_j)*(cfactor*j - mu_j);
 		}
 	}
 	sd_i = sqrtf(sd_i);
@@ -203,11 +212,11 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 			//energy
 			energy += P[i][j] * P[i][j];
 			//homogeneity
-			homogeneity += P[i][j] / (1 + abs(i - j));
+			homogeneity += P[i][j] / (1 + abs(cfactor*i - cfactor*j));
 			//contrast
-			contrast += P[i][j] * (i - j)*(i - j);
+			contrast += P[i][j] * (cfactor*i - cfactor*j)*(cfactor*i - cfactor*j);
 			//correlation
-			correlation += (P[i][j] * (i - mu_i)*(j - mu_j) / (sd_i*sd_j));
+			correlation += (P[i][j] * (cfactor*i - mu_i)*(cfactor*j - mu_j) / (sd_i*sd_j));
 			//entropy
 			if (GLCM[i][j] != 0)
 				entropy += P[i][j] * -log(P[i][j]);
@@ -230,11 +239,15 @@ vector<string> get_all_files_names_within_folder(string folder, string format)
 	string search_path = folder + "/*." + format;
 	WIN32_FIND_DATA fd;
 	HANDLE hFind = ::FindFirstFile(search_path.c_str(), &fd);
-	if (hFind != INVALID_HANDLE_VALUE) {
-		do {
+
+	if (hFind != INVALID_HANDLE_VALUE)
+	{
+		do 
+		{
 			// read all (real) files in current folder
 			// , delete '!' read other 2 default folder . and ..
-			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			{
 				names.push_back(fd.cFileName);
 			}
 		} while (::FindNextFile(hFind, &fd));
