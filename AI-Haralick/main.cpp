@@ -5,6 +5,7 @@
 #include <fstream>
 #include <vector>
 #include <Windows.h>
+#include <cmath>
 
 using namespace cv;
 using namespace std;
@@ -16,17 +17,29 @@ vector<string> get_all_files_names_within_folder(string folder, string format);
 
 int main(int argc, char** argv)
 {
-	if (argc != 3)
+	string path;
+	string format;
+
+	if (argc == 1)
 	{
-		cout << "Usage is opencv1 \"directory path\" extension" << endl;
+		cout << "Usage is opencv1 \"directory path\" [extension]" << endl;
 		return -1;
+	}
+	else if (argc == 2)
+	{
+		path = argv[1];
+		format = "*";
+	}
+	else
+	{
+		path = argv[1];
+		format = argv[2];
 	}
 
 	ofstream outfile("Results.txt");
 	vector<string> fileNames;
 	string filename;
-	string path = argv[1];
-	string format = argv[2];
+
 
 	fileNames = get_all_files_names_within_folder(path, format);
 
@@ -214,7 +227,7 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 			//homogeneity
 			homogeneity += P[i][j] / (1 + abs(cfactor*i - cfactor*j));
 			//contrast
-			contrast += P[i][j] * (cfactor*i - cfactor*j)*(cfactor*i - cfactor*j);
+			contrast += P[i][j] * abs(cfactor*i - cfactor*j)*abs(cfactor*i - cfactor*j);
 			//correlation
 			correlation += (P[i][j] * (cfactor*i - mu_i)*(cfactor*j - mu_j) / (sd_i*sd_j));
 			//entropy
@@ -230,7 +243,7 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	ofile << " " << homogeneity;
 	ofile << " " << contrast;
 	ofile << " " << correlation;
-	ofile << " " << entropy;
+	ofile << " " << entropy <<" ";
 }
 
 vector<string> get_all_files_names_within_folder(string folder, string format)
