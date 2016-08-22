@@ -6,6 +6,7 @@
 #include <vector>
 #include <Windows.h>
 #include <cmath>
+#include <ctime>
 
 using namespace cv;
 using namespace std;
@@ -20,17 +21,17 @@ int main(int argc, char** argv)
 	string path;
 	string format;
 
-	if (argc == 1)
+	if (argc == 1) // no arguments given
 	{
 		cout << "Usage is opencv1 \"directory path\" [extension]" << endl;
 		return -1;
 	}
-	else if (argc == 2)
+	else if (argc == 2) //only file path
 	{
 		path = argv[1];
 		format = "*";
 	}
-	else
+	else //file path and extension
 	{
 		path = argv[1];
 		format = argv[2];
@@ -40,7 +41,7 @@ int main(int argc, char** argv)
 	vector<string> fileNames;
 	string filename;
 
-
+	//Get all files in given folder
 	fileNames = get_all_files_names_within_folder(path, format);
 
 	if (fileNames.empty())
@@ -49,6 +50,9 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	clock_t starttime = clock();
+
+	//process each image
 	for each(string file in fileNames)
 	{
 		cout << "Processing Image: " << file;
@@ -60,9 +64,13 @@ int main(int argc, char** argv)
 		outfile << endl;
 	}
 
+	clock_t endtime = clock();
+
+	double runtime = (endtime - starttime) / (double)CLOCKS_PER_SEC;
 	outfile.close();
 
-	cout << "All images processed" << endl;
+	cout << "All images processed." << endl;
+	cout << fileNames.size() <<" images processed in " << runtime<< " seconds."<< endl;
 
 	return 0;
 }
@@ -80,11 +88,9 @@ int openImage(string &imageName, ofstream &ofile)
 
 	CV_Assert(image.depth() == CV_8U);  // accept only uchar images
 
-										// Reduce gray levels to have 16 levels only
-	uchar divideWith = 16;//16;
+	// Reduce gray levels to have 16 levels only
+	uchar divideWith = 16;
 	uchar table[256];
-	//for (int i = 0; i < 256; ++i)
-	//	table[i] = (uchar)(divideWith * (i / divideWith));
 
 	//scale to 16 gray levels
 	for (int i = 0; i < 256; ++i)
@@ -100,7 +106,7 @@ int openImage(string &imageName, ofstream &ofile)
 	Mat newImage;
 	LUT(image, lookUpTable, newImage);
 
-	int distances[2] = { 1, 3 };
+	int distances[2] = { 1, 3 }; 
 
 	for (int i = 0; i < 2;++i) // 2 distances
 	{
@@ -123,7 +129,7 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	int nRows = I.rows;
 	int nCols = I.cols * channels;
 
-	int cfactor = 16; //factor for fixing levels
+	int cfactor = 16; //factor for fixing levels- reduced to 16 to make matrix smaller
 
 	//set up matrix
 	int GLCM[16][16] = { 0 };
@@ -149,7 +155,7 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 		break;
 	}
 
-	// Try to speed this up
+	// To do: Try to speed this up by using pointers
 	for (int i = 0; i < nRows; ++i)
 	{
 		for (int j = 0; j < nCols; ++j)
@@ -246,6 +252,10 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	ofile << " " << entropy <<" ";
 }
 
+/*
+Find all files in a given folder
+http://stackoverflow.com/questions/612097/how-can-i-get-the-list-of-files-in-a-directory-using-c-or-c
+*/
 vector<string> get_all_files_names_within_folder(string folder, string format)
 {
 	vector<string> names;
