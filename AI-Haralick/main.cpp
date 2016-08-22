@@ -18,8 +18,11 @@ vector<string> get_all_files_names_within_folder(string folder, string format);
 
 int main(int argc, char** argv)
 {
-	string path;
-	string format;
+	string path, format, filename;
+	ofstream outfile("Results.txt"); //Results file
+	vector<string> fileNames;
+	clock_t starttime, endtime;
+	double runtime;
 
 	if (argc == 1) // no arguments given
 	{
@@ -37,10 +40,6 @@ int main(int argc, char** argv)
 		format = argv[2];
 	}
 
-	ofstream outfile("Results.txt");
-	vector<string> fileNames;
-	string filename;
-
 	//Get all files in given folder
 	fileNames = get_all_files_names_within_folder(path, format);
 
@@ -50,7 +49,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	clock_t starttime = clock();
+	starttime = clock();
 
 	//process each image
 	for each(string file in fileNames)
@@ -64,11 +63,11 @@ int main(int argc, char** argv)
 		outfile << endl;
 	}
 
-	clock_t endtime = clock();
-
-	double runtime = (endtime - starttime) / (double)CLOCKS_PER_SEC;
+	endtime = clock();
 	outfile.close();
 
+	runtime = (endtime - starttime) / (double)CLOCKS_PER_SEC;
+	
 	cout << "All images processed." << endl;
 	cout << fileNames.size() <<" images processed in " << runtime<< " seconds."<< endl;
 
@@ -78,7 +77,7 @@ int main(int argc, char** argv)
 int openImage(string &imageName, ofstream &ofile)
 {
 	Mat image;
-	image = imread(imageName.c_str(), IMREAD_GRAYSCALE); // Read the file
+	image = imread(imageName.c_str(), IMREAD_GRAYSCALE); // Read the image as greyscale
 
 	if (image.empty()) // Check for invalid input
 	{
@@ -88,11 +87,11 @@ int openImage(string &imageName, ofstream &ofile)
 
 	CV_Assert(image.depth() == CV_8U);  // accept only uchar images
 
-	// Reduce gray levels to have 16 levels only
-	uchar divideWith = 16;
+	// Reduce gray levels to have 32 levels only
+	uchar divideWith = 8;
 	uchar table[256];
 
-	//scale to 16 gray levels
+	//scale gray levels
 	for (int i = 0; i < 256; ++i)
 		table[i] = (uchar)((i / divideWith));
 
@@ -129,11 +128,11 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	int nRows = I.rows;
 	int nCols = I.cols * channels;
 
-	int cfactor = 16; //factor for fixing levels- reduced to 16 to make matrix smaller
-
 	//set up matrix
-	int GLCM[16][16] = { 0 };
+	int GLCM[32][32] = { 0 };
 	int d0, d1;
+
+	int L = 32; //max greylevel
 
 	switch (direction)
 	{
@@ -169,11 +168,11 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	}
 
 	int sum = 0;
-	float P[16][16] = { 0 };
+	float P[32][32] = { 0 };
 
-	for (int i = 0; i < 16; ++i)
+	for (int i = 0; i < L; ++i)
 	{
-		for (int j = 0; j < 16; ++j)
+		for (int j = 0; j < L; ++j)
 		{
 			sum += GLCM[i][j];
 			P[i][j] =(float) GLCM[i][j];
@@ -181,9 +180,9 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	}
 
 	//Probability
-	for (int i = 0; i < 16; ++i)
+	for (int i = 0; i < L; ++i)
 	{
-		for (int j = 0; j < 16; ++j)
+		for (int j = 0; j < L; ++j)
 		{
 			P[i][j] /= (float)sum;
 		}
@@ -191,23 +190,23 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 
 	// mean
 	float mu_i = 0, mu_j = 0;
-	for (int i = 0; i < 16; ++i)
+	for (int i = 0; i < L; ++i)
 	{
-		for (int j = 0; j < 16; ++j)
+		for (int j = 0; j < L; ++j)
 		{
-			mu_i += cfactor*i*P[i][j];
-			mu_j += cfactor*j*P[i][j];
+			mu_i += i*P[i][j];
+			mu_j += j*P[i][j];
 		}
 	}
 
 	// standard deviation
 	float sd_i = 0, sd_j = 0;
-	for (int i = 0; i < 16; ++i)
+	for (int i = 0; i < L; ++i)
 	{
-		for (int j = 0; j < 16; ++j)
+		for (int j = 0; j < L; ++j)
 		{
-			sd_i += P[i][j] * (cfactor*i - mu_i)*(cfactor*i - mu_i);
-			sd_j += P[i][j] * (cfactor*j - mu_j)*(cfactor*j - mu_j);
+			sd_i += P[i][j] * (i - mu_i)*(i - mu_i);
+			sd_j += P[i][j] * (j - mu_j)*(j - mu_j);
 		}
 	}
 	sd_i = sqrtf(sd_i);
@@ -221,9 +220,9 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 	float correlation = 0;
 	float entropy = 0;
 
-	for (int i = 0; i < 16; ++i)
+	for (int i = 0; i < L; ++i)
 	{
-		for (int j = 0; j < 16; ++j)
+		for (int j = 0; j < L; ++j)
 		{
 			//probability
 			if (P[i][j] > max_probability)
@@ -231,11 +230,11 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 			//energy
 			energy += P[i][j] * P[i][j];
 			//homogeneity
-			homogeneity += P[i][j] / (1 + abs(cfactor*i - cfactor*j));
+			homogeneity += P[i][j] / (1 + abs(i - j));
 			//contrast
-			contrast += P[i][j] * abs(cfactor*i - cfactor*j)*abs(cfactor*i - cfactor*j);
+			contrast += P[i][j] * abs(i - j)*abs(i - j);
 			//correlation
-			correlation += (P[i][j] * (cfactor*i - mu_i)*(cfactor*j - mu_j) / (sd_i*sd_j));
+			correlation += (P[i][j] * (i - mu_i)*(j - mu_j) / (sd_i*sd_j));
 			//entropy
 			if (GLCM[i][j] != 0)
 				entropy += P[i][j] * -log(P[i][j]);
