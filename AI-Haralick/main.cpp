@@ -57,11 +57,13 @@ int main(int argc, char** argv)
 	{
 		cout << "Processing Image: " << file;
 		filename = path + "\\" + file;
-		if (openImage(filename, outfile)==0)
+		if (openImage(filename, outfile) == 0)
+		{
 			cout << " - Succesful" << endl;
+			outfile << '\n';
+		}
 		else
 			cout << " - Could not open Image" << endl;
-		outfile << endl;
 	}
 
 	endtime = clock();
