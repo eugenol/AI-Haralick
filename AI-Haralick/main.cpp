@@ -14,6 +14,7 @@ using namespace std;
 void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile);
 int openImage(string &imageName, ofstream &ofile);
 vector<string> get_all_files_names_within_folder(string folder, string format);
+int findLabel(string &imageName);
 
 
 int main(int argc, char** argv)
@@ -104,6 +105,10 @@ int openImage(string &imageName, ofstream &ofile)
 	// apply to image
 	Mat newImage;
 	LUT(image, lookUpTable, newImage);
+
+	//find label (good, empty,bad)
+	int label = findLabel(imageName);
+	ofile << label << " ";
 
 	int distances[2] = { 1, 3 }; 
 
@@ -276,4 +281,16 @@ vector<string> get_all_files_names_within_folder(string folder, string format)
 		::FindClose(hFind);
 	}
 	return names;
+}
+
+int findLabel(string &imageName)
+{
+	if (imageName.find("bad") != std::string::npos)
+		return 0;
+	else if (imageName.find("good") != std::string::npos)
+		return 1;
+	else if (imageName.find("empty") != std::string::npos)
+		return 2;
+	else
+		return 3;
 }
