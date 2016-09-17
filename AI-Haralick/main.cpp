@@ -13,36 +13,43 @@ using namespace std;
 
 void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile);
 int openImage(string &imageName, ofstream &ofile);
-vector<string> get_all_files_names_within_folder(string folder, string format);
+vector<string> get_all_files_names_within_folder(string folder);
 int findLabel(string &imageName);
 
 
 int main(int argc, char** argv)
 {
-	string path, format, filename;
-	ofstream outfile("Results.txt"); //Results file
+	string path, format, filename, outfilename;
 	vector<string> fileNames;
 	clock_t starttime, endtime;
 	double runtime;
 
-	if (argc == 1) // no arguments given
+	string keys =	"{help h ? wtf| | }"
+					"{imagefolder| train | }"
+					"{outfile| results.txt |}";
+
+	CommandLineParser parser(argc, argv, keys);
+
+	if (parser.has("help"))
 	{
-		cout << "Usage is opencv1 \"directory path\" [extension]" << endl;
-		return -1;
-	}
-	else if (argc == 2) //only file path
-	{
-		path = argv[1];
-		format = "*";
-	}
-	else //file path and extension
-	{
-		path = argv[1];
-		format = argv[2];
+		return 0;
 	}
 
+	if (parser.has("imagefolder"))
+		path = parser.get<string>("imagefolder");
+	else
+	{
+		cout << "error: folder path required" << endl;
+		return -1;
+	}
+
+	if (parser.has("outfile"))
+		outfilename = parser.get<string>("outfile");
+
+	ofstream outfile(outfilename); //Results file
+
 	//Get all files in given folder
-	fileNames = get_all_files_names_within_folder(path, format);
+	fileNames = get_all_files_names_within_folder(path);
 
 	if (fileNames.empty())
 	{
@@ -262,10 +269,10 @@ void GLCM_calc(Mat& I, int distance, int direction, ofstream &ofile)
 Find all files in a given folder
 http://stackoverflow.com/questions/612097/how-can-i-get-the-list-of-files-in-a-directory-using-c-or-c
 */
-vector<string> get_all_files_names_within_folder(string folder, string format)
+vector<string> get_all_files_names_within_folder(string folder)
 {
 	vector<string> names;
-	string search_path = folder + "/*." + format;
+	string search_path = folder + "/*.*";
 	WIN32_FIND_DATA fd;
 	HANDLE hFind = ::FindFirstFile(search_path.c_str(), &fd);
 
@@ -287,9 +294,9 @@ vector<string> get_all_files_names_within_folder(string folder, string format)
 
 int findLabel(string &imageName)
 {
-	if (imageName.find("bad") != std::string::npos)
+	if (imageName.find("good") != std::string::npos)
 		return 0;
-	else if (imageName.find("good") != std::string::npos)
+	else if (imageName.find("bad") != std::string::npos)
 		return 1;
 	else if (imageName.find("empty") != std::string::npos)
 		return 2;
